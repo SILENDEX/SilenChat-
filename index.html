@@ -291,7 +291,19 @@
         function sendMessage() {
             const msgInput = document.getElementById('message');
             if(!msgInput.value) return;
-            socket.emit('chat message', { name: currentUsername, color: currentColor, pic: currentProfilePic, msg: msgInput.value, type: 'text' });
+            
+            // --- KODE SLASH COMMAND DETECTOR ---
+            const messageData = { 
+                name: currentUsername, 
+                color: currentColor, 
+                pic: currentProfilePic, 
+                msg: msgInput.value, 
+                type: 'text' 
+            };
+            
+            socket.emit('chat message', messageData);
+            // ------------------------------------
+            
             msgInput.value = '';
             socket.emit('stop typing');
         }
