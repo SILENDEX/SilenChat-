@@ -18,8 +18,14 @@ if (fs.existsSync(HISTORY_FILE)) {
     chatHistory = JSON.parse(fs.readFileSync(HISTORY_FILE));
 }
 
+// Pastikan folder uploads ada
+if (!fs.existsSync('uploads')){ fs.mkdirSync('uploads'); }
+
 app.use(express.static('public'));
 app.use('/uploads', express.static('uploads'));
+
+// Tampilan utama
+app.get('/', (req, res) => { res.sendFile(path.join(__dirname, 'index.html')); });
 
 const storage = multer.diskStorage({
     destination: './uploads/',
