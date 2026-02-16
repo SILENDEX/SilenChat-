@@ -238,6 +238,15 @@
             const colorInput = document.getElementById('color').value;
             const fileInput = document.getElementById('profilePicInput');
             if(!usernameInput) return alert("Isi nama!");
+            
+            // --- KODE BARU BUAT PASSWORD ---
+            let password = "";
+            if (usernameInput === "Admin") {
+                password = prompt("Masukkan Password Admin:");
+                if (password === null) return; // Kalau cancel, batalin login
+            }
+            // -------------------------------
+
             currentUsername = usernameInput;
             currentColor = colorInput;
             
@@ -254,7 +263,21 @@
             localStorage.setItem('chatUsername', currentUsername);
             localStorage.setItem('chatColor', currentColor);
             localStorage.setItem('chatPic', currentProfilePic);
-            enterChat();
+            
+            // --- KODE BARU: Kirim password ---
+            enterChat(password);
+        }
+
+        // --- KODE BARU: Sekarang fungsi ini menerima password ---
+        function enterChat(password = "") {
+            document.getElementById('login-form').style.display = 'none';
+            document.getElementById('chat-area').style.display = 'flex';
+            document.getElementById('header-username').innerText = currentUsername;
+            
+            // Kirim username dan password ke server
+            socket.emit('register user', { username: currentUsername, password: password });
+            
+            setHeight();
         }
 
         function enterChat() {
