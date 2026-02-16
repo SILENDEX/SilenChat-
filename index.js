@@ -10,7 +10,7 @@ const server = http.createServer(app);
 const io = new Server(server);
 
 const HISTORY_FILE = 'chat_history.json';
-const ADMIN_PASSWORD = "089963"; // GANTI PASSWORD DI SINI
+const ADMIN_PASSWORD = "089963"; // PASSWORD DI SINI
 
 // Load chat history
 let chatHistory = [];
@@ -64,14 +64,21 @@ io.on('connection', (socket) => {
     socket.on('register user', (data) => {
         socket.username = data.username;
         
-        if (data.username === "Admin" && data.password === ADMIN_PASSWORD) {
-            console.log("Admin berhasil login dengan password");
-            socket.isAdmin = true; // Tandai socket ini sebagai admin
-            socket.emit('loginResult', { success: true, message: "Selamat Datang Admin" });
-        } else if (data.username === "Admin") {
-            console.log("Password admin salah");
-            socket.isAdmin = false;
-            socket.emit('loginResult', { success: false, message: "Password Salah!" });
+        if (data.username === "Admin") {
+            if (data.password === ADMIN_PASSWORD) {
+                console.log("Admin berhasil login dengan password");
+                socket.isAdmin = true; // Tandai socket ini sebagai admin
+                socket.emit('loginResult', { success: true, message: "Selamat Datang Admin" });
+            } else {
+                console.log("Password admin salah");
+                socket.isAdmin = false;
+                socket.emit('loginResult', { success: false, message: "Password Salah!" });
+                
+                // --- KODE ANTI-TEMBUS ---
+                socket.disconnect(); // TENDANG USER JIKA PASSWORD SALAH
+                return; // STOP LOGIKA DI SINI
+                // -------------------------
+            }
         } else {
             socket.isAdmin = false;
             console.log(data.username + " masuk ke chat");
@@ -91,6 +98,7 @@ io.on('connection', (socket) => {
 });
 
 // --- PERINTAH TERMINAL (HANYA ADMIN) ---
+// (Bagian ini tidak perlu diubah, kodenya sudah benar)
 process.stdin.on('data', (data) => {
     const input = data.toString().trim();
     if (input.startsWith('/')) {
