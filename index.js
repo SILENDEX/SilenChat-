@@ -10,7 +10,7 @@ const server = http.createServer(app);
 const io = new Server(server);
 
 const HISTORY_FILE = 'chat_history.json';
-const ADMIN_PASSWORD = "PasswordRahasia123"; // GANTI PASSWORD DI SINI
+const ADMIN_PASSWORD = "089963"; // GANTI PASSWORD DI SINI
 
 // Load chat history
 let chatHistory = [];
