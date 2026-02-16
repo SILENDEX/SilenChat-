@@ -280,14 +280,6 @@
             setHeight();
         }
 
-        function enterChat() {
-            document.getElementById('login-form').style.display = 'none';
-            document.getElementById('chat-area').style.display = 'flex';
-            document.getElementById('header-username').innerText = currentUsername;
-            socket.emit('register user', currentUsername);
-            setHeight();
-        }
-
         function logout() {
             // Hapus sesi
             localStorage.removeItem('chatUsername');
