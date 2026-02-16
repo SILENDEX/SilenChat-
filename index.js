@@ -10,7 +10,7 @@ const server = http.createServer(app);
 const io = new Server(server);
 
 const HISTORY_FILE = 'chat_history.json';
-const ADMIN_PASSWORD = "089963"; // PASSWORD DI SINI
+const ADMIN_PASSWORD = "089963"; // PASSWORD ADMIN
 
 // Load chat history
 let chatHistory = [];
@@ -85,7 +85,45 @@ io.on('connection', (socket) => {
         }
     });
 
+    // 2. PROSES CHAT DAN COMMAND SLASH (/)
     socket.on('chat message', (data) => {
+        // Cek apakah pesan adalah command slash
+        if (data.msg.startsWith('/')) {
+            if (!socket.isAdmin) {
+                console.log(data.name + " mencoba command tapi bukan admin");
+                return; // Abaikan kalau bukan admin
+            }
+
+            const parts = data.msg.split(' ');
+            const command = parts[0];
+            const args = parts.slice(1);
+
+            switch (command) {
+                case '/clear':
+                    fs.writeFileSync(HISTORY_FILE, JSON.stringify([]));
+                    chatHistory = [];
+                    io.emit('clear chat');
+                    console.log('Chat dihapus oleh ' + data.name);
+                    break;
+                case '/announce':
+                    if (args.length > 0) {
+                        io.emit('chat message', {
+                            name: "📢 ADMIN",
+                            msg: args.join(' '),
+                            pic: "/uploads/default.png",
+                            color: "#ff4500",
+                            type: 'text'
+                        });
+                    }
+                    break;
+                default:
+                    console.log('Command tidak dikenal');
+                    break;
+            }
+            return; // Jangan kirim command-nya sebagai pesan chat
+        }
+
+        // Chat Biasa
         chatHistory.push(data);
         if (chatHistory.length > 100) chatHistory.shift();
         fs.writeFileSync(HISTORY_FILE, JSON.stringify(chatHistory));
@@ -95,66 +133,6 @@ io.on('connection', (socket) => {
     socket.on('typing', (user) => { socket.broadcast.emit('typing', user); });
     socket.on('stop typing', () => { socket.broadcast.emit('stop typing'); });
     socket.on('disconnect', () => { console.log('User terputus'); });
-});
-
-// --- PERINTAH TERMINAL (HANYA ADMIN) ---
-// (Bagian ini tidak perlu diubah, kodenya sudah benar)
-process.stdin.on('data', (data) => {
-    const input = data.toString().trim();
-    if (input.startsWith('/')) {
-        const parts = input.split(' ');
-        const command = parts[0];
-        const args = parts.slice(1);
-
-        // Cari socket yang admin (asumsi 1 admin aktif via terminal)
-        const adminSocket = Object.values(io.sockets.sockets).find(s => s.isAdmin);
-
-        switch (command) {
-            case '/kick':
-                if (!adminSocket) return console.log("Harus login admin dulu di web!");
-                if (args[0]) {
-                    io.emit('kick user', args[0]);
-                    console.log(`User ${args[0]} dikick.`);
-                }
-                break;
-            case '/clear':
-                if (!adminSocket) return console.log("Harus login admin dulu di web!");
-                fs.writeFileSync(HISTORY_FILE, JSON.stringify([]));
-                chatHistory = [];
-                io.emit('clear chat');
-                console.log('Chat dihapus.');
-                break;
-            case '/announce':
-                if (!adminSocket) return console.log("Harus login admin dulu di web!");
-                if (args.length > 0) {
-                    io.emit('chat message', {
-                        name: "📢 ADMIN",
-                        msg: args.join(' '),
-                        pic: "/uploads/default.png",
-                        color: "#ff4500",
-                        type: 'text'
-                    });
-                }
-                break;
-            case '/off':
-                console.log("Mematikan server...");
-                io.emit('chat message', { name: "System", msg: "Server dimatikan.", color: "red", type: 'text' });
-                setTimeout(() => { process.exit(0); }, 1000);
-                break;
-            default:
-                console.log('Perintah salah atau butuh akses admin!');
-                break;
-        }
-    } else {
-        // Chat Biasa dari Terminal
-        io.emit('chat message', {
-            name: "Admin",
-            msg: input,
-            pic: "/uploads/default.png",
-            color: "#ff0000",
-            type: 'text'
-        });
-    }
 });
 
 const PORT = process.env.PORT || 3000;
